@@ -4057,7 +4057,7 @@ fail:
             DeviceFPGA_PCIeCfgSpaceCoreRead(ctx, pb200, 0x80000000 | 0);
         }
         dwVIDPID = *(PDWORD)pb200;
-        lcprintfv(ctxLC,
+        lcprintf(ctxLC,
             "DEVICE: FPGA: ERROR: %s [%i,v%i.%i,%04x%s]\n",
             szDeviceError,
             ctx->wFpgaID,
