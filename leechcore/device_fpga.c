@@ -4051,7 +4051,7 @@ fail:
     if(ctxLC->fPrintf[LC_PRINTF_VV] && ctx->dev.fInitialized) {
         DeviceFPGA_ConfigPrint(ctxLC, ctx);
     }
-    if(szDeviceError && ctxLC->fPrintf[LC_PRINTF_V]) {
+    if(szDeviceError) {
         *(PDWORD)pb200 = 0;
         if(ctx->dev.fInitialized && ctx->wFpgaVersionMajor) {
             DeviceFPGA_PCIeCfgSpaceCoreRead(ctx, pb200, 0x80000000 | 0);
