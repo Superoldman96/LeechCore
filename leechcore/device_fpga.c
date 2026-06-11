@@ -1789,7 +1789,7 @@ VOID DeviceFPGA_HotResetV4(_In_ PDEVICE_CONTEXT_FPGA ctx)
 _Success_(return)
 BOOL DeviceFPGA_GetDeviceID_FpgaVersionV4(_In_ PDEVICE_CONTEXT_FPGA ctx)
 {
-    WORD wbsDeviceId, wMagicPCIe;
+    WORD wbsDeviceId = 0, wMagicPCIe = 0;
     DWORD dwInactivityTimer = 0x000186a0;       // set inactivity timer to 1ms ( 0x0186a0 * 100MHz ) [only later activated on UDP bitstreams]
     DWORD cNfWarm = 0;
     if(!DeviceFPGA_ConfigRead(ctx, 0x0008, (PBYTE)&ctx->wFpgaVersionMajor, 1, FPGA_REG_CORE | FPGA_REG_READONLY) || ctx->wFpgaVersionMajor < 4) { return FALSE; }
@@ -1797,9 +1797,7 @@ BOOL DeviceFPGA_GetDeviceID_FpgaVersionV4(_In_ PDEVICE_CONTEXT_FPGA ctx)
     DeviceFPGA_ConfigRead(ctx, 0x000a, (PBYTE)&ctx->wFpgaID, 1, FPGA_REG_CORE | FPGA_REG_READONLY);
     DeviceFPGA_ConfigWrite(ctx, 0x0008, (PBYTE)&dwInactivityTimer, 4, FPGA_REG_CORE | FPGA_REG_READWRITE);
     // PCIe
-    DeviceFPGA_ConfigRead(ctx, 0x0008, (PBYTE)&wbsDeviceId, 2, FPGA_REG_PCIE | FPGA_REG_READONLY);
-    // warm up FT601 read pipe
-    while(!wbsDeviceId && (cNfWarm++ < 64)) {
+    while(!wbsDeviceId && (cNfWarm++ < 4)) {
         DeviceFPGA_ConfigRead(ctx, 0x0008, (PBYTE)&wbsDeviceId, 2, FPGA_REG_PCIE | FPGA_REG_READONLY);
     }
     if(!wbsDeviceId && DeviceFPGA_ConfigRead(ctx, 0x0000, (PBYTE)&wMagicPCIe, 2, FPGA_REG_PCIE | FPGA_REG_READWRITE) && (wMagicPCIe == 0x6745)) {
