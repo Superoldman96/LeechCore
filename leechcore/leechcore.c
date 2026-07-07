@@ -454,8 +454,8 @@ EXPORTED_FUNCTION HANDLE LcCreateEx(_Inout_ PLC_CONFIG pLcCreateConfig, _Out_opt
     ctxLC->dwHandleCount = 1;
     ctxLC->cMemMapMax = 0x20;
     ctxLC->pMemMap = LocalAlloc(LMEM_ZEROINIT, ctxLC->cMemMapMax * sizeof(LC_MEMMAP_ENTRY));
-    ctxLC->fPrintf[LC_PRINTF_ENABLE] = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_ENABLED) ? TRUE : FALSE;
-    ctxLC->fPrintf[LC_PRINTF_V]      = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_V) ? TRUE : FALSE;
+    ctxLC->fPrintf[LC_PRINTF_ENABLE] = (ctxLC->Config.dwPrintfVerbosity & (LC_CONFIG_PRINTF_ENABLED | LC_CONFIG_PRINTF_V | LC_CONFIG_PRINTF_VV | LC_CONFIG_PRINTF_VVV)) ? TRUE : FALSE;
+    ctxLC->fPrintf[LC_PRINTF_V]      = (ctxLC->Config.dwPrintfVerbosity & (LC_CONFIG_PRINTF_V | LC_CONFIG_PRINTF_VV)) ? TRUE : FALSE;
     ctxLC->fPrintf[LC_PRINTF_VV]     = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_VV) ? TRUE : FALSE;
     ctxLC->fPrintf[LC_PRINTF_VVV]    = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_VVV) ? TRUE : FALSE;
     LcCreate_FetchDeviceParameter(ctxLC);
