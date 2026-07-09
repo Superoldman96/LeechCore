@@ -454,7 +454,7 @@ EXPORTED_FUNCTION HANDLE LcCreateEx(_Inout_ PLC_CONFIG pLcCreateConfig, _Out_opt
     ctxLC->dwHandleCount = 1;
     ctxLC->cMemMapMax = 0x20;
     ctxLC->pMemMap = LocalAlloc(LMEM_ZEROINIT, ctxLC->cMemMapMax * sizeof(LC_MEMMAP_ENTRY));
-    ctxLC->fPrintf[LC_PRINTF_ENABLE] = (ctxLC->Config.dwPrintfVerbosity & (LC_CONFIG_PRINTF_ENABLED | LC_CONFIG_PRINTF_V | LC_CONFIG_PRINTF_VV | LC_CONFIG_PRINTF_VVV)) ? TRUE : FALSE;
+    ctxLC->fPrintf[LC_PRINTF_ENABLE] = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_ENABLED) ? TRUE : FALSE;
     ctxLC->fPrintf[LC_PRINTF_V]      = (ctxLC->Config.dwPrintfVerbosity & (LC_CONFIG_PRINTF_V | LC_CONFIG_PRINTF_VV)) ? TRUE : FALSE;
     ctxLC->fPrintf[LC_PRINTF_VV]     = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_VV) ? TRUE : FALSE;
     ctxLC->fPrintf[LC_PRINTF_VVV]    = (ctxLC->Config.dwPrintfVerbosity & LC_CONFIG_PRINTF_VVV) ? TRUE : FALSE;
@@ -518,6 +518,7 @@ EXPORTED_FUNCTION BOOL LcAllocScatter1(_In_ DWORD cMEMs, _Out_ PPMEM_SCATTER *pp
     DWORD i, o = 0;
     PBYTE pb, pbData;
     PMEM_SCATTER pMEMs, *ppMEMs;
+    if((cMEMs > 0x00080000) && (sizeof(void*) == 4)) { return FALSE; }
     if(!(pb = LocalAlloc(LMEM_ZEROINIT, cMEMs * (sizeof(PMEM_SCATTER) + sizeof(MEM_SCATTER) + 0x1000)))) { return FALSE; }
     ppMEMs = (PPMEM_SCATTER)pb;
     pMEMs = (PMEM_SCATTER)(pb + cMEMs * (sizeof(PMEM_SCATTER)));
@@ -549,6 +550,7 @@ EXPORTED_FUNCTION BOOL LcAllocScatter2(_In_ DWORD cbData, _Inout_updates_opt_(cb
     DWORD i, o = 0;
     PBYTE pb;
     PMEM_SCATTER pMEMs, *ppMEMs;
+    if(cMEMs > 0x00010000) { return FALSE; }
     if(cbData > (cMEMs << 12)) { return FALSE; }
     if(!(pb = LocalAlloc(LMEM_ZEROINIT, cMEMs * (sizeof(PMEM_SCATTER) + sizeof(MEM_SCATTER))))) { return FALSE; }
     ppMEMs = (PPMEM_SCATTER)pb;
@@ -581,6 +583,8 @@ EXPORTED_FUNCTION BOOL LcAllocScatter3(_Inout_updates_opt_(0x1000) PBYTE pbDataF
     DWORD i, o = 0;
     PBYTE pb;
     PMEM_SCATTER pMEMs, *ppMEMs;
+    if(cMEMs > 0x00010000) { return FALSE; }
+    if(cbData > 0xf0000000) { return FALSE; }
     if(pbDataFirstPage) { cbData += 0x1000; }
     if(pbDataLastPage) { cbData += 0x1000; }
     if(cbData > (cMEMs << 12)) { return FALSE; }

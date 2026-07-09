@@ -186,9 +186,8 @@ VOID LeechRPC_RpcClose(PLEECHRPC_CLIENT_CONTEXT ctx)
         ctx->grpc.pfn_leechgrpc_client_free(ctx->grpc.hGRPC);
         ctx->grpc.hGRPC = NULL;
     }
-    if(ctx->grpc.hDll) {
-        FreeLibrary(ctx->grpc.hDll);
-    }
+    // Keep gRPC library loaded until process exit.
+    ctx->grpc.hDll = NULL;
     ZeroMemory(&ctx->grpc, sizeof(ctx->grpc));
     // Close the MR-RPC connection:
 #ifdef _WIN32

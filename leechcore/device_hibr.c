@@ -87,6 +87,8 @@ const HIBR_OFFSET HIBR_OFFSET_PROFILES[] = {
 
 #define HIBR_NUM_CACHE_ENTRIES                  4
 
+#define HIBR_MAX_COMPRESS_DATA                  0x10000
+
 // decompression function pointer compatible with ntdll!RtlDecompressBuffer.
 typedef NTSTATUS WINAPI HIBR_RtlDecompressBufferEx(
     USHORT CompressionFormat,
@@ -124,9 +126,9 @@ typedef struct tdDEVICE_CONTEXT_HIBRFILE {
     DWORD iCsCacheNext;
     struct {
         DWORD iCS;              // current compression set index
-        BYTE pb[0x10000];       // buffer for decompression
+        BYTE pb[0x00100000];    // buffer for decompression
     } CS_Cache[HIBR_NUM_CACHE_ENTRIES];
-    BYTE pbBufferCompressedData[0x10000];
+    BYTE pbBufferCompressedData[0x00100000];
     BYTE pbWorkSpace[0x00100000];
 } DEVICE_CONTEXT_HIBRFILE, *PDEVICE_CONTEXT_HIBRFILE;
 
@@ -245,7 +247,7 @@ PBYTE DeviceHibr_ReadPage(_In_ PLC_CONTEXT ctxLC, _In_ PHIBR_COMPRESSION_SET pCS
     NTSTATUS nt;
     PBYTE pbBufferUncompressed;
     DWORD i, cbUncompressed, cbUncompressedResult = 0;
-    if(!iCS || (iPG > pCS->cpg) || (iPG >= 0x10)) { return NULL; }
+    if(!iCS || (iPG >= pCS->cpg) || (iPG >= 0x10)) { return NULL; }
     // 1: try to find page in cache:
     for(i = 0; i < HIBR_NUM_CACHE_ENTRIES; i++) {
         if(ctx->CS_Cache[i].iCS == iCS) {
@@ -257,7 +259,7 @@ PBYTE DeviceHibr_ReadPage(_In_ PLC_CONTEXT ctxLC, _In_ PHIBR_COMPRESSION_SET pCS
     if(fread(ctx->pbBufferCompressedData, 1, pCS->cb, ctx->hFile) != pCS->cb) { return NULL; }
     // 3: decompress buffer and store in cache:
     ctx->CS_Cache[ctx->iCsCacheNext].iCS = 0;
-    cbUncompressed = 0x1000 * pCS->cpg;
+    cbUncompressed = min(0x1000 * pCS->cpg, HIBR_MAX_COMPRESS_DATA);
     pbBufferUncompressed = ctx->CS_Cache[ctx->iCsCacheNext].pb;
     if(pCS->tp == COMPRESS_ALGORITHM_NONE) {
         memcpy(pbBufferUncompressed, ctx->pbBufferCompressedData, cbUncompressed);

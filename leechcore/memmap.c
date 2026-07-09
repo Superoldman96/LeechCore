@@ -33,6 +33,7 @@ EXPORTED_FUNCTION BOOL LcMemMap_AddRange(_In_ PLC_CONTEXT ctxLC, _In_ QWORD pa, 
     if((cb & 0xfff) == 1) { cb--; }
     if((pa & 0xfff) || (cb & 0xfff)) { return FALSE; }
     if(ctxLC->cMemMap >= 0x00100000) { return FALSE; }
+    if(pa + cb < pa) { return FALSE; }
     if(ctxLC->cMemMap == ctxLC->cMemMapMax) {
         // grow memmap with with factor x2:
         pvGrowMemMap = LocalAlloc(LMEM_ZEROINIT, ctxLC->cMemMapMax * sizeof(LC_MEMMAP_ENTRY) * 2);
@@ -64,6 +65,22 @@ EXPORTED_FUNCTION QWORD LcMemMap_GetMaxAddress(_In_ PLC_CONTEXT ctxLC)
 }
 
 /*
+* Check if a request is within a range or not.
+* -- paMap
+* -- cbMap
+* -- paReq
+* -- cbReq
+* -- return
+*/
+static __forceinline
+BOOL LcMemMap_RangeContains(_In_ QWORD paMap, _In_ QWORD cbMap, _In_ QWORD paReq, _In_ QWORD cbReq)
+{
+    if(paReq < paMap) { return FALSE; }
+    if(cbReq > cbMap) { return FALSE; }
+    return (paReq - paMap) <= (cbMap - cbReq);
+}
+
+/*
 * Translate each individual MEM. The qwA field will be overwritten with the
 * translated value - or on error -1.
 * -- ctxLC
@@ -81,7 +98,7 @@ VOID LcMemMap_TranslateMEMs(_In_ PLC_CONTEXT ctxLC, _In_ DWORD cMEMs, _Inout_ PP
         pMEM = ppMEMs[iMEM];
         if(pMEM->qwA == (QWORD)-1) { continue; }
         // check already existing (optimization).
-        if((pMEM->qwA >= peMap->pa) && (pMEM->qwA + pMEM->cb <= peMap->pa + peMap->cb)) {
+        if(LcMemMap_RangeContains(peMap->pa, peMap->cb, pMEM->qwA, pMEM->cb)) {
             pMEM->qwA = pMEM->qwA + peMap->paRemap - peMap->pa;
             continue;
         }
@@ -99,14 +116,14 @@ VOID LcMemMap_TranslateMEMs(_In_ PLC_CONTEXT ctxLC, _In_ DWORD cMEMs, _Inout_ PP
         }
         for(; iMap < ctxLC->cMemMap; iMap++) {  // find entry
             peMap = ctxLC->pMemMap + iMap;
-            if((pMEM->qwA >= peMap->pa) && (pMEM->qwA + pMEM->cb <= peMap->pa + peMap->cb)) {
+            if(LcMemMap_RangeContains(peMap->pa, peMap->cb, pMEM->qwA, pMEM->cb)) {
                 break;
             }
             if(pMEM->qwA < peMap->pa) {
                 break;
             }
         }
-        if((pMEM->qwA >= peMap->pa) && (pMEM->qwA + pMEM->cb <= peMap->pa + peMap->cb)) {
+        if(LcMemMap_RangeContains(peMap->pa, peMap->cb, pMEM->qwA, pMEM->cb)) {
             pMEM->qwA = pMEM->qwA + peMap->paRemap - peMap->pa;
         } else {
             pMEM->qwA = (QWORD)-1;
